@@ -15,7 +15,6 @@ To start building WebSockets-based applications, first install the required pack
 ```bash
 @@filename()
 $ npm i --save @nestjs/websockets @nestjs/platform-socket.io
-$ npm i --save-dev @types/socket.io
 @@switch
 $ npm i --save @nestjs/websockets @nestjs/platform-socket.io
 ```
@@ -53,6 +52,24 @@ handleEvent(data) {
 ```
 
 > info **Hint** `@SubscribeMessage()` and `@MessageBody()` decorators are imported from `@nestjs/websockets` package.
+
+You can also pass in a property key to the decorator to extract it from the incoming message body:
+
+```typescript
+@@filename(events.gateway)
+@SubscribeMessage('events')
+handleEvent(@MessageBody('id') id: number): number {
+  // id === messageBody.id
+  return id;
+}
+@@switch
+@Bind(MessageBody('id'))
+@SubscribeMessage('events')
+handleEvent(id) {
+  // id === messageBody.id
+  return id;
+}
+```
 
 If you would prefer not to use decorators, the following code is functionally equivalent:
 
@@ -103,7 +120,7 @@ socket.emit('events', { name: 'Nest' });
 The `handleEvent()` method will be executed. In order to listen for messages emitted from within the above handler, the client has to attach a corresponding acknowledgment listener:
 
 ```typescript
-socket.emit('events', { name: 'Nest' }, data => console.log(data));
+socket.emit('events', { name: 'Nest' }, (data) => console.log(data));
 ```
 
 #### Multiple responses
@@ -133,7 +150,7 @@ handleEvent(data) {
 In order to listen for the incoming response(s), the client has to apply another event listener.
 
 ```typescript
-socket.on('events', data => console.log(data));
+socket.on('events', (data) => console.log(data));
 ```
 
 #### Asynchronous responses

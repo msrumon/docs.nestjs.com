@@ -86,7 +86,7 @@ Some sample cron patterns are:
       <td>every minute, on the 45th second</td>
     </tr>
     <tr>
-      <td><code>* 10 * * * *</code></td>
+      <td><code>0 10 * * * *</code></td>
       <td>every hour, at the start of the 10th minute</td>
     </tr>
     <tr>
@@ -110,14 +110,14 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
-  @Cron(CronExpression.EVERY_45_SECONDS)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   handleCron() {
-    this.logger.debug('Called every 45 seconds');
+    this.logger.debug('Called every 30 seconds');
   }
 }
 ```
 
-In this example, the `handleCron()` method will be called every `45` seconds.
+In this example, the `handleCron()` method will be called every `30` seconds.
 
 Alternatively, you can supply a JavaScript `Date` object to the `@Cron()` decorator. Doing so causes the job to execute exactly once, at the specified date.
 
@@ -260,7 +260,7 @@ addCronJob(name: string, seconds: string) {
     this.logger.warn(`time (${seconds}) for job ${name} to run!`);
   });
 
-  this.scheduler.addCronJob(name, job);
+  this.schedulerRegistry.addCronJob(name, job);
   job.start();
 
   this.logger.warn(
@@ -277,7 +277,7 @@ In this code, we use the `CronJob` object from the `cron` package to create the 
 
 ```typescript
 deleteCron(name: string) {
-  this.scheduler.deleteCronJob(name);
+  this.schedulerRegistry.deleteCronJob(name);
   this.logger.warn(`job ${name} deleted!`);
 }
 ```
@@ -286,7 +286,7 @@ deleteCron(name: string) {
 
 ```typescript
 getCrons() {
-  const jobs = this.scheduler.getCronJobs();
+  const jobs = this.schedulerRegistry.getCronJobs();
   jobs.forEach((value, key, map) => {
     let next;
     try {
@@ -325,7 +325,7 @@ addInterval(name: string, milliseconds: number) {
   };
 
   const interval = setInterval(callback, milliseconds);
-  this.scheduler.addInterval(name, interval);
+  this.schedulerRegistry.addInterval(name, interval);
 }
 ```
 
@@ -336,7 +336,7 @@ That method takes two arguments: a name for the interval, and the interval itsel
 
 ```typescript
 deleteInterval(name: string) {
-  this.scheduler.deleteInterval(name);
+  this.schedulerRegistry.deleteInterval(name);
   this.logger.warn(`Interval ${name} deleted!`);
 }
 ```
@@ -345,7 +345,7 @@ deleteInterval(name: string) {
 
 ```typescript
 getIntervals() {
-  const intervals = this.scheduler.getIntervals();
+  const intervals = this.schedulerRegistry.getIntervals();
   intervals.forEach(key => this.logger.log(`Interval: ${key}`));
 }
 ```
@@ -374,7 +374,7 @@ addTimeout(name: string, milliseconds: number) {
   };
 
   const timeout = setTimeout(callback, milliseconds);
-  this.scheduler.addTimeout(name, timeout);
+  this.schedulerRegistry.addTimeout(name, timeout);
 }
 ```
 
@@ -385,7 +385,7 @@ That method takes two arguments: a name for the timeout, and the timeout itself.
 
 ```typescript
 deleteTimeout(name: string) {
-  this.scheduler.deleteTimeout(name);
+  this.schedulerRegistry.deleteTimeout(name);
   this.logger.warn(`Timeout ${name} deleted!`);
 }
 ```
@@ -394,7 +394,7 @@ deleteTimeout(name: string) {
 
 ```typescript
 getTimeouts() {
-  const timeouts = this.scheduler.getTimeouts();
+  const timeouts = this.schedulerRegistry.getTimeouts();
   timeouts.forEach(key => this.logger.log(`Timeout: ${key}`));
 }
 ```

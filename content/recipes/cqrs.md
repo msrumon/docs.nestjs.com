@@ -196,7 +196,7 @@ export class KillDragonHandler {
 Now everything works as expected. Notice that we need to `commit()` events since they're not being dispatched immediately. Obviously, an object doesn't have to exist up front. We can easily merge type context as well:
 
 ```typescript
-const HeroModel = this.publisher.mergeContext(Hero);
+const HeroModel = this.publisher.mergeClassContext(Hero);
 new HeroModel('id');
 ```
 
@@ -289,5 +289,7 @@ export class HeroesGameModule {}
 #### Summary
 
 `CommandBus`, `QueryBus` and `EventBus` are **Observables**. This means that you can easily subscribe to the whole stream and enrich your application with **Event Sourcing**.
+
+#### Example
 
 A working example is available [here](https://github.com/kamilmysliwiec/nest-cqrs-example).

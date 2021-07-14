@@ -48,7 +48,7 @@ export class Author {
 
 The `Author` object type, like any class, is made of a collection of fields, with each field declaring a type. A field's type corresponds to a [GraphQL type](https://graphql.org/learn/schema/). A field's GraphQL type can be either another object type or a scalar type. A GraphQL scalar type is a primitive (like `ID`, `String`, `Boolean`, or `Int`) that resolves to a single value.
 
-> info **Hint** In addition to GraphQLs built-in scalar types, you can define custom scalar types (read [more](/graphql/scalars)).
+> info **Hint** In addition to GraphQL's built-in scalar types, you can define custom scalar types (read [more](/graphql/scalars)).
 
 The above `Author` object type definition will cause Nest to **generate** the SDL we showed above:
 
@@ -120,7 +120,6 @@ export class Post {
 The `Post` object type will result in generating the following part of the GraphQL schema in SDL:
 
 ```graphql
-@@filename(schema.gql)
 type Post {
   id: Int!
   title: String!
@@ -567,7 +566,7 @@ export class AuthorsResolver {
 
 #### Generating types
 
-Assuming that we use the schema first approach and have enabled the typings generation feature (with `outputAs: 'class'` as shown in the [previous](/graphql/quick-start) chapter), once you run the application it will generate the following file (in the location you specified in the `GraphQLModule.forRoot()` method. For example, in `src/graphql.ts`)
+Assuming that we use the schema first approach and have enabled the typings generation feature (with `outputAs: 'class'` as shown in the [previous](/graphql/quick-start) chapter), once you run the application it will generate the following file (in the location you specified in the `GraphQLModule.forRoot()` method). For example, in `src/graphql.ts`:
 
 ```typescript
 @@filename(graphql)

@@ -43,7 +43,7 @@ export class RedisIoAdapter extends IoAdapter {
   createIOServer(port: number, options?: any): any {
     const server = super.createIOServer(port, options);
     const redisAdapter = redisIoAdapter({ host: 'localhost', port: 6379 });
-    
+
     server.adapter(redisAdapter);
     return server;
   }
@@ -53,13 +53,15 @@ export class RedisIoAdapter extends IoAdapter {
 Afterward, simply switch to your newly created Redis adapter.
 
 ```typescript
-const app = await NestFactory.create(ApplicationModule);
+const app = await NestFactory.create(AppModule);
 app.useWebSocketAdapter(new RedisIoAdapter(app));
 ```
 
 #### Ws library
 
 Another available adapter is a `WsAdapter` which in turn acts like a proxy between the framework and integrate blazing fast and thoroughly tested [ws](https://github.com/websockets/ws) library. This adapter is fully compatible with native browser WebSockets and is far faster than socket.io package. Unluckily, it has significantly fewer functionalities available out-of-the-box. In some cases, you may just don't necessarily need them though.
+
+> info **Hint** `ws` library does not support namespaces (communication channels popularised by `socket.io`). However, to somehow mimic this feature, you can mount multiple `ws` servers on different paths (example: `@WebSocketGateway({{ '{' }} path: '/users' {{ '}' }})`).
 
 In order to use `ws`, we firstly have to install the required package:
 
@@ -70,7 +72,7 @@ $ npm i --save @nestjs/platform-ws
 Once the package is installed, we can switch an adapter:
 
 ```typescript
-const app = await NestFactory.create(ApplicationModule);
+const app = await NestFactory.create(AppModule);
 app.useWebSocketAdapter(new WsAdapter(app));
 ```
 
@@ -92,7 +94,7 @@ export class WsAdapter implements WebSocketAdapter {
   constructor(private app: INestApplicationContext) {}
 
   create(port: number, options: any = {}): any {
-    return new ws.Server({ port, ...options });
+    return new WebSocket.Server({ port, ...options });
   }
 
   bindClientConnect(server, callback: Function) {
@@ -139,7 +141,7 @@ Then, we can set up a custom adapter using `useWebSocketAdapter()` method:
 
 ```typescript
 @@filename(main)
-const app = await NestFactory.create(ApplicationModule);
+const app = await NestFactory.create(AppModule);
 app.useWebSocketAdapter(new WsAdapter(app));
 ```
 

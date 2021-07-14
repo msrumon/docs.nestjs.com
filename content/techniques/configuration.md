@@ -148,16 +148,16 @@ import { readFileSync } from 'fs';
 import * as yaml from 'js-yaml';
 import { join } from 'path';
 
-const YAML_CONFIG_FILENAME = 'config.yml';
+const YAML_CONFIG_FILENAME = 'config.yaml';
 
 export default () => {
   return yaml.load(
-    fs.readFileSync(join(__dirname, YAML_CONFIG_FILENAME), 'utf8'),
-  );
+    readFileSync(join(__dirname, YAML_CONFIG_FILENAME), 'utf8'),
+  ) as Record<string, any>;
 };
 ```
 
-> warning **Note** Nest CLI does not automatically move your "assets" (non-TS files) to the `dist` folder during the build process. To make sure that your YAML files are being moved as part of the compilation, add `compilerOptions#assets` to the `nest-cli.json` configuration file (`"assets": ["**/*.yml"]`). Read more [here](/cli/monorepo#assets).
+> warning **Note** Nest CLI does not automatically move your "assets" (non-TS files) to the `dist` folder during the build process. To make sure that your YAML files are copied, you have to specify this in the `compilerOptions#assets` object in the `nest-cli.json` file. As an example, if the `config` folder is at the same level as the `src` folder, add `compilerOptions#assets` with the value `"assets": [{{ '{' }}"include": "../config/*.yaml", "outDir": "./dist/config"{{ '}' }}]`. Read more [here](/cli/monorepo#assets).
 
 <app-banner-enterprise></app-banner-enterprise>
 
@@ -224,15 +224,23 @@ interface EnvironmentVariables {
 
 // somewhere in the code
 constructor(private configService: ConfigService<EnvironmentVariables>) {
-  // this is valid
-  const port = this.configService.get<number>('PORT');
+  const port = this.configService.get('PORT', { infer: true });
 
-  // this is invalid as URL is not a property on the EnvironmentVariables interface
-  const url = this.configService.get<string>('URL');
+  // Error: this is invalid as the URL property is not defined
+  const url = this.configService.get('URL', { infer: true });
 }
 ```
 
-> warning **Notice** If you have nested properties in your config, like in the `database.host` example above, the interface must have a matching `'database.host': string;` property. Otherwise a TypeScript error will be thrown.
+With the `infer` property set to `true`, the `ConfigService#get` method will automatically infer the property type based on the interface, so for example, `typeof port === "number"` since `PORT` has a `number` type in the `EnvironmentVariables` interface.
+
+Also, with the `infer` feature, you can infer the type of a nested custom configuration object's property, even when using dot notation, as follows:
+
+```typescript
+constructor(private configService: ConfigService<{ database: { host: string } }>) {
+  const dbHost = this.configService.get('database.host', { infer: true });
+  // typeof dbHost === "string"
+}
+```
 
 #### Configuration namespaces
 
@@ -314,11 +322,10 @@ It is standard practice to throw an exception during application startup if requ
 - [Joi](https://github.com/sideway/joi) built-in validator. With Joi, you define an object schema and validate JavaScript objects against it.
 - A custom `validate()` function which takes environment variables as an input.
 
-To use Joi, we must install Joi package (and its types, for **TypeScript** users):
+To use Joi, we must install Joi package:
 
 ```bash
 $ npm install --save joi
-$ npm install --save-dev @types/joi
 ```
 
 > warning **Notice** The latest version of `joi` requires you to be running Node v12 or later. For older versions of node, please install `v16.1.8`. This is mainly after the release of `v17.0.2` which causes errors during build time. For more information, please refer to [their 17.0.0 release notes](https://github.com/sideway/joi/issues/2262).
@@ -346,7 +353,7 @@ export class AppModule {}
 
 By default, all schema keys are considered optional. Here, we set default values for `NODE_ENV` and `PORT` which will be used if we don't provide these variables in the environment (`.env` file or process environment). Alternatively, we can use the `required()` validation method to require that a value must be defined in the environment (`.env` file or process environment). In this case, the validation step will throw an exception if we don't provide the variable in the environment. See [Joi validation methods](https://joi.dev/api/?v=17.3.0#example) for more on how to construct validation schemas.
 
-By default, unknown environment variables (environment variables whose keys are not present in the schema) are allowed and do not trigger a validation exception. By default, all validation errors are reported. You can alter these behaviors by passing an options object via the `validationOptions` key of the `forRoot()` options object. This options object can contain any of the standard validation options properties provided by [Joi validation options](https://hapi.dev/family/joi/api/?v=17.0.2#anyvalidvalues---aliases-equal). For example, to reverse the two settings above, pass options like this:
+By default, unknown environment variables (environment variables whose keys are not present in the schema) are allowed and do not trigger a validation exception. By default, all validation errors are reported. You can alter these behaviors by passing an options object via the `validationOptions` key of the `forRoot()` options object. This options object can contain any of the standard validation options properties provided by [Joi validation options](https://joi.dev/api/?v=17.3.0#anyvalidatevalue-options). For example, to reverse the two settings above, pass options like this:
 
 ```typescript
 @@filename(app.module)

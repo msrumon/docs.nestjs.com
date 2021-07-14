@@ -25,7 +25,7 @@ import { AppController } from './app.controller';
   imports: [CacheModule.register()],
   controllers: [AppController],
 })
-export class ApplicationModule {}
+export class AppModule {}
 ```
 
 #### Interacting with the Cache store
@@ -38,10 +38,10 @@ constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
 > info **Hint** The `Cache` class is imported from the `cache-manager`, while `CACHE_MANAGER` token from the `@nestjs/common` package.
 
-The `get` method on the `Cache` instance (from the `cache-manager` package) is used to retrieve items from the cache. If the item does not exist in the cache, an exception will be thrown.
+The `get` method on the `Cache` instance (from the `cache-manager` package) is used to retrieve items from the cache. If the item does not exist in the cache, `null` will be returned.
 
 ```typescript
-const value = this.cacheManager.get('key');
+const value = await this.cacheManager.get('key');
 ```
 
 To add an item to the cache, use the `set` method:
@@ -50,10 +50,18 @@ To add an item to the cache, use the `set` method:
 await this.cacheManager.set('key', 'value');
 ```
 
-You can also specify a TTL (expiration time) for this specific key, as follows:
+The default expiration time of the cache is 5 seconds.
+
+You can manually specify a TTL (expiration time in seconds) for this specific key, as follows:
 
 ```typescript
 await this.cacheManager.set('key', 'value', { ttl: 1000 });
+```
+
+To disable expiration of the cache, set the `ttl` configuration property to `0`:
+
+```typescript
+await this.cacheManager.set('key', 'value', { ttl: 0 });
 ```
 
 To remove an item from the cache, use the `del` method:
@@ -105,7 +113,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     },
   ],
 })
-export class ApplicationModule {}
+export class AppModule {}
 ```
 
 #### Customize caching
@@ -216,7 +224,7 @@ import { AppController } from './app.controller';
   ],
   controllers: [AppController],
 })
-export class ApplicationModule {}
+export class AppModule {}
 ```
 
 #### Async configuration
@@ -276,3 +284,7 @@ CacheModule.registerAsync({
 ```
 
 This works the same as `useClass` with one critical difference - `CacheModule` will lookup imported modules to reuse any already-created `ConfigService`, instead of instantiating its own.
+
+#### Example
+
+A working example is available [here](https://github.com/nestjs/nest/tree/master/sample/20-cache).

@@ -11,7 +11,7 @@ With the gRPC transporter, Nest uses `.proto` files to dynamically bind clients 
 To start building gRPC-based microservices, first install the required packages:
 
 ```bash
-$ npm i --save grpc @grpc/proto-loader
+$ npm i --save @grpc/grpc-js @grpc/proto-loader
 ```
 
 #### Overview
@@ -38,6 +38,17 @@ const app = await NestFactory.createMicroservice(AppModule, {
 ```
 
 > info **Hint** The `join()` function is imported from the `path` package; the `Transport` enum is imported from the `@nestjs/microservices` package.
+
+In the `nest-cli.json` file, we add the `assets` property that allows us to distribute non-TypeScript files, and `watchAssets` - to turn on watching all non-TypeScript assets. In our case, we want `.proto` files to be automatically copied to the `dist` folder. 
+
+```json
+{
+  "compilerOptions": {
+    "assets": ["**/*.proto"],
+    "watchAssets": true
+  }
+}
+```
 
 #### Options
 
@@ -324,7 +335,9 @@ call(): Observable<any> {
 
 Please note that this would require updating the `HeroesService` interface that we've defined a few steps earlier.
 
-A full working example is available [here](https://github.com/nestjs/nest/tree/master/sample/04-grpc).
+#### Example
+
+A working example is available [here](https://github.com/nestjs/nest/tree/master/sample/04-grpc).
 
 #### gRPC Streaming
 
@@ -398,7 +411,11 @@ bidiHello(messages: Observable<any>, metadata: Metadata, call: ServerDuplexStrea
     });
   };
   const onComplete = () => subject.complete();
-  messages.subscribe(onNext, null, onComplete);
+  messages.subscribe({
+    next: onNext,
+    complete: onComplete,
+  });
+
 
   return subject.asObservable();
 }

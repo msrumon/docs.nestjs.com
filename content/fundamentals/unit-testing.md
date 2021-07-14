@@ -239,15 +239,30 @@ describe('Cats', () => {
 });
 ```
 
-> info **Hint** If you're using [Fastify](/techniques/performance) as your HTTP adapter, it requires slightly different configuration:
+> info **Hint** If you're using [Fastify](/techniques/performance) as your HTTP adapter, it requires a slightly different configuration, and has built-in testing capabilities:
 >
 > ```ts
-> app = moduleRef.createNestApplication<NestFastifyApplication>(
->   new FastifyAdapter(),
-> );
+> let app: NestFastifyApplication;
+> 
+> beforeAll(async () => {
+>   app = moduleRef.createNestApplication<NestFastifyApplication>(
+>     new FastifyAdapter(),
+>   );
 >
-> await app.init();
-> await app.getHttpAdapter().getInstance().ready();
+>   await app.init();
+>   await app.getHttpAdapter().getInstance().ready();
+> })
+> 
+> it(`/GET cats`, () => {
+>   return app
+>     .inject({
+>       method: 'GET',
+>       url: '/cats'
+>     }).then(result => {
+>       expect(result.statusCode).toEqual(200)
+>       expect(result.payload).toEqual(/* expectedPayload */)
+>     });
+> })
 > ```
 
 In this example, we build on some of the concepts described earlier. In addition to the `compile()` method we used earlier, we now use the `createNestApplication()` method to instantiate a full Nest runtime environment. We save a reference to the running app in our `app` variable so we can use it to simulate HTTP requests.
@@ -263,6 +278,8 @@ Each of the override methods returns an object with 3 different methods that mir
 - `useFactory`: you supply a function that returns an instance that will override the object.
 
 Each of the override method types, in turn, returns the `TestingModule` instance, and can thus be chained with other methods in the [fluent style](https://en.wikipedia.org/wiki/Fluent_interface). You should use `compile()` at the end of such a chain to cause Nest to instantiate and initialize the module.
+
+Also, sometimes you may want to provide a custom logger e.g. when the tests are run (for example, on a CI server). Use the `setLogger()` method and pass an object that fulfills the `LoggerService` interface to instruct the `TestModuleBuilder` how to log during tests (by default, only "error" logs will be logged to the console).
 
 The compiled module has several useful methods, as described in the following table:
 

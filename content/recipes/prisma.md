@@ -32,7 +32,7 @@ Start by installing the Prisma CLI as a development dependency in your project:
 
 ```bash
 $ cd hello-prisma
-$ npm install @prisma/cli --save-dev
+$ npm install prisma --save-dev
 ```
 
 In the following steps, we'll be utilizing the [Prisma CLI](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-cli). As a best practice, it's recommended to invoke the CLI locally by prefixing it with `npx`:
@@ -46,7 +46,7 @@ $ npx prisma
 If you're using Yarn, then you can install the Prisma CLI as follows:
 
 ```bash
-$ yarn add @prisma/cli --dev
+$ yarn add prisma --dev
 ```
 
 Once installed, you can invoke it by prefixing it with `yarn`:
@@ -180,10 +180,8 @@ model Post {
 With your Prisma models in place, you can generate your SQL migration files and run them against the database. Run the following commands in your terminal:
 
 ```bash
-$ npx prisma migrate dev --name init --preview-feature
+$ npx prisma migrate dev --name init
 ```
-
-> info **Note** The `prisma migrate` commands currently requires the `--preview-feature` option as it's in [Preview](https://www.prisma.io/docs/about/releases#preview).
 
 This `prisma migrate dev` command generates SQL files and directly runs them against the database. In this case, the following migration files was created in the existing `prisma` directory:
 
@@ -249,21 +247,26 @@ When setting up your NestJS application, you'll want to abstract away the Prisma
 Inside the `src` directory, create a new file called `prisma.service.ts` and add the following code to it:
 
 ```typescript
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { INestApplication, Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy {
+  implements OnModuleInit {
+
   async onModuleInit() {
     await this.$connect();
   }
 
-  async onModuleDestroy() {
-    await this.$disconnect();
+  async enableShutdownHooks(app: INestApplication) {
+    this.$on('beforeExit', async () => {
+      await app.close();
+    });    
   }
 }
 ```
+
+> info **Note** The `onModuleInit` is optional — if you leave it out, Prisma will connect lazily on its first call to the database. We don't bother with `onModuleDestroy`, since Prisma has its own shutdown hooks where it will destroy the connection. For more info on `enableShutdownHooks`, please see [Issues with `enableShutdownHooks`](#issues-with-enableShutdownHooks)
 
 Next, you can write services that you can use to make database calls for the `User` and `Post` models from your Prisma schema.
 
@@ -462,7 +465,7 @@ export class AppController {
     return this.postService.createPost({
       title,
       content,
-      User: {
+      author: {
         connect: { email: authorEmail },
       },
     });
@@ -517,6 +520,25 @@ This controller implements the following routes:
 ###### `DELETE`
 
 - `/post/:id`: Delete a post by its `id`
+
+#### Issues with `enableShutdownHooks`
+
+Prisma interferes with NestJS `enableShutdownHooks`. Prisma listens for shutdown signals and will call `process.exit()` before your application shutdown hooks fire. To deal with this, you would need to add a listener for Prisma `beforeExit` event.
+
+```typescript
+// main.ts
+...
+import { PrismaService } from './services/prisma/prisma.service';
+...
+bootstrap() {
+  ...
+  const prismaService: PrismaService = app.get(PrismaService);
+  prismaService.enableShutdownHooks(app)
+  ...
+}
+```
+
+You can [read more](https://github.com/prisma/prisma/issues/2917#issuecomment-708340112) about Prisma handling of shutdown signal, and `beforeExit` event.
 
 #### Summary
 

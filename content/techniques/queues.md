@@ -205,6 +205,8 @@ import { Processor } from '@nestjs/bull';
 export class AudioConsumer {}
 ```
 
+> info **Hint** Consumers must be registered as `providers` so the `@nestjs/bull` package can pick them up.
+
 Where the decorator's string argument (e.g., `'audio'`) is the name of the queue to be associated with the class methods.
 
 Within a consumer class, declare job handlers by decorating handler methods with the `@Process()` decorator.
@@ -221,7 +223,7 @@ export class AudioConsumer {
     for (i = 0; i < 100; i++) {
       await doSomething(job.data);
       progress += 10;
-      job.progress(progress);
+      await job.progress(progress);
     }
     return {};
   }
@@ -238,6 +240,27 @@ You can designate that a job handler method will handle **only** jobs of a certa
 @Process('transcode')
 async transcode(job: Job<unknown>) { ... }
 ```
+
+#### Request-scoped consumers
+
+When a consumer is flagged as request-scoped (learn more about the injection scopes [here](/fundamentals/injection-scopes#provider-scope)), a new instance of the class will be created exclusively for each job. The instance will be garbage-collected after the job has completed.
+
+```typescript
+@Processor({
+  name: 'audio',
+  scope: Scope.REQUEST,
+})
+```
+
+Since request-scoped consumer classes are instantiated dynamically and scoped to a single job, you can inject a `JOB_REF` through the constructor using a standard approach.
+
+```typescript
+constructor(@Inject(JOB_REF) jobRef: Job) {
+  console.log(jobRef);
+}
+```
+
+> info **Hint** The `JOB_REF` token is imported from the `@nestjs/bull` package.
 
 #### Event listeners
 
@@ -419,12 +442,12 @@ BullModule.forRootAsync({
 });
 ```
 
-The construction above will instantiate `BullConfigService` inside `BullModule` and use it to provide an options object by calling `createBullOptions()`. Note that this means that the `BullConfigService` has to implement the `BullOptionsFactory` interface, as shown below:
+The construction above will instantiate `BullConfigService` inside `BullModule` and use it to provide an options object by calling `createSharedConfiguration()`. Note that this means that the `BullConfigService` has to implement the `SharedBullConfigurationFactory` interface, as shown below:
 
 ```typescript
 @Injectable()
-class BullConfigService implements BullOptionsFactory {
-  createBullOptions(): BullModuleOptions {
+class BullConfigService implements SharedBullConfigurationFactory {
+  createSharedConfiguration(): SharedBullConfigurationFactory {
     return {
       redis: {
         host: 'localhost',

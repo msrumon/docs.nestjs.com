@@ -109,6 +109,8 @@ GraphQLModule.forRoot({
 }),
 ```
 
+#### Example
+
 A fully working code first sample is available [here](https://github.com/nestjs/nest/tree/master/sample/23-graphql-code-first).
 
 #### Schema first
@@ -194,6 +196,8 @@ definitionsFactory.generate({
   skipResolverArgs: true,
 });
 ```
+
+#### Example
 
 A fully working schema first sample is available [here](https://github.com/nestjs/nest/tree/master/sample/12-graphql-schema-first).
 
